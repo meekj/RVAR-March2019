@@ -208,4 +208,47 @@ mb_cca
 
 autoplot(mb_cca)
 
+## ------------------
+## ------------------
+
+## The BaseR for loop method - Warning this will likely require 10 minutes to a full hour !
+
+## Number of one second wide bins
+##
+timerange_s <- max(events$StartSecond) - min(events$StartSecond) + 1
+
+ccuBaseR <- vector(mode = 'numeric', length = timerange_s)
+
+t_start <- proc.time()
+
+## The Loop
+for (i in 1:nrow(events)) {
+    idx <- events$StartSecond[i] + 1       # Start index; R index starts at 1
+    if (events$Duration[i] > 1) {                      # Does event span multiple bins?
+        idt <- as.integer(ceiling(events$Duration[i])) # Event duration in bins
+        bytes_per_second <- events$BytesRecv[i] / idt
+        k <- idx + idt - 1                               # Final index to be incremented
+        if ((k) > timerange_s) {                         # Don't go past end of vector
+            idt <- timerange_s - idx
+            k <- idx + idt
+        }
+        ## ccuBaseR[idx:k] <- ccuBaseR[idx:k] +  bytes_per_second  # Vectorized bin increments
+        for (j in idx:k) {
+            ccuBaseR[j] <- ccuBaseR[j] + bytes_per_second          # An inner loop, how bad is it?
+        }
+    } else {
+        ccuBaseR[idx] <- ccuBaseR[idx] + events$BytesRecv[i]       # Single bin to be incremented
+    }
+}
+
+proc.time() - t_start
+
+## ------------------
+## ------------------
+
+## Are the results identical?
+
+d_cca <- ccuBaseR - cca
+
+summary(d_cca)
 
