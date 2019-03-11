@@ -172,11 +172,11 @@ timerange_s <- max(events$StartSecond) - min(events$StartSecond) + 1
 
 ## Run the C++ code with timing
 ##
-t_end_prep <- proc.time()
-cca <- concurrentEstimatedThroughput(timerange_s, events$StartSecond, events$Duration, events$BytesRecv)
-t_end_loop <- proc.time()
+t_start <- proc.time()
+cca     <- concurrentEstimatedThroughput(timerange_s, events$StartSecond, events$Duration, events$BytesRecv)
+t_end   <- proc.time()
 
-t_end_loop - t_end_prep
+t_end - t_start
 
 
 ########### Slide 18 ###########
@@ -192,7 +192,7 @@ cca_df$Time <- seq(1:nrow(cca_df)) - 1       # Add relative time column
 str(cca_df)
 
 ggplot(cca_df) +
-    geom_point(aes(x = Time, y = Throughput), size = 0.6, color = 'blue', shape = 19) +
+    geom_point(aes(x = Time, y = Throughput), size = 0.6, color = 'dodgerblue', shape = 19) +
     xlab('Time, seconds') + ylab('Throughput, Mbps')
 
 ## ------------------
@@ -211,7 +211,10 @@ autoplot(mb_cca)
 ## ------------------
 ## ------------------
 
-## The BaseR for loop method - Warning this will likely require 10 minutes to a full hour !
+
+########### Slide 15 ###########
+
+## The BaseR for loop method - Warning: this will likely require 7 minutes to a full hour !
 
 ## Number of one second wide bins
 ##
@@ -223,19 +226,19 @@ t_start <- proc.time()
 
 ## The Loop
 for (i in 1:nrow(events)) {
-    idx <- events$StartSecond[i] + 1       # Start index; R index starts at 1
+    idx <- events$StartSecond[i] + 1                   # Start index; R index starts at 1
     if (events$Duration[i] > 1) {                      # Does event span multiple bins?
         idt <- as.integer(ceiling(events$Duration[i])) # Event duration in bins
         bytes_per_second <- events$BytesRecv[i] / idt
-        k <- idx + idt - 1                               # Final index to be incremented
-        if ((k) > timerange_s) {                         # Don't go past end of vector
+        k <- idx + idt - 1                             # Final index to be incremented
+        if ((k) > timerange_s) {                       # Don't go past end of vector
             idt <- timerange_s - idx
             k <- idx + idt
         }
-        ## ccuBaseR[idx:k] <- ccuBaseR[idx:k] +  bytes_per_second  # Vectorized bin increments
-        for (j in idx:k) {
-            ccuBaseR[j] <- ccuBaseR[j] + bytes_per_second          # An inner loop, how bad is it?
-        }
+        ccuBaseR[idx:k] <- ccuBaseR[idx:k] +  bytes_per_second  # Vectorized bin increments
+        ## for (j in idx:k) {
+        ##     ccuBaseR[j] <- ccuBaseR[j] + bytes_per_second          # An inner loop, how bad is it?
+        ## }
     } else {
         ccuBaseR[idx] <- ccuBaseR[idx] + events$BytesRecv[i]       # Single bin to be incremented
     }
