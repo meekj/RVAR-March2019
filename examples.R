@@ -185,9 +185,9 @@ str(cca) # Result vector
 
 ## Convert to data frame with relative time in seconds and throughput in Mbps
 ##
-cca         <- 8 * cca  / 1e6                # 8 bits / byte  - Mbps
-cca_df      <- data.frame(Throughput = cca)  # Make the vector a data frame
-cca_df$Time <- seq(1:nrow(cca_df)) - 1       # Add relative time column
+## cca      <- 8 * cca  / 1e6                          # 8 bits / byte  - Mbps
+cca_df      <- data.frame(Throughput = 8 * cca / 1e6)  # Make the vector a data frame
+cca_df$Time <- seq(1:nrow(cca_df)) - 1                 # Add relative time column
 
 str(cca_df)
 
@@ -214,7 +214,7 @@ autoplot(mb_cca)
 
 ########### Slide 15 ###########
 
-## The BaseR for loop method - Warning: this will likely require 7 minutes to a full hour !
+## The BaseR for loop method - Warning: this will likely require 7 minutes (R 3.5.2) to a full hour (R 3.4.x) !
 
 ## Number of one second wide bins
 ##
